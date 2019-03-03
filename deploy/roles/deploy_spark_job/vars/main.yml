@@ -1,0 +1,34 @@
+---
+spark_submit_command: >
+     spark-submit --files {{ jaas_config_file }}#{{ jaas_config_file }},{{ kerberos_keytab }}#{{ kerberos_keytab_link }}
+     --driver-java-options -Djava.security.auth.login.config=./{{ jaas_config_file_driver }}
+     --conf "spark.executor.extraJavaOptions=-Djava.security.auth.login.config=./{{ jaas_config_file }}"
+     --conf spark.streaming.backpressure.enabled=true
+     --conf spark.streaming.kafka.maxRatePerPartition=1800
+     --conf spark.ui.retainedJobs=50
+     --conf spark.ui.retainedStages=5000
+     --conf spark.ui.retainedTasks=500
+     --conf spark.worker.ui.retainedExecutors=50
+     --conf spark.worker.ui.retainedDrivers=50
+     --conf spark.streaming.ui.retainedBatches=500
+     --conf spark.cleaner.periodicGC.interval=15min
+     --conf spark.ui.view.acls.groups={{ access_group }}
+     --conf spark.admin.acls.groups={{ access_group }}
+     --conf spark.acls.enable=true
+     --num-executors {{ spark_executors }}
+     --executor-memory {{ executor_memory }}
+     --driver-memory {{ driver_memory }}
+     --deploy-mode client
+     --master yarn
+     --class {{ class }} {{ jar }}
+     --in {{ in }}
+     --out {{ out }}
+     --checkpoint_dir {{ checkpointDir }}
+     --boot_strap_servers {{ bootStrapServers }}
+     --kafka_security_protocol {{ kafkaSecurityProtocol }}
+     --batch_size_in_sec 20
+     {{ await_time | default('') }}
+     {{ unique_checkpoint | default('') }}
+
+jaas_config_file: "{{ user | lower }}_jaas.conf"
+jaas_config_file_driver: "{{ user | lower }}_jaas_driver.conf"

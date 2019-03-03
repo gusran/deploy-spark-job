@@ -1,0 +1,73 @@
+- name: Copy job
+  copy:
+    src: ../target/scala-2.11/{{ jar }}
+    dest: "{{ local_dir }}/{{ jar }}"
+
+- name: Get Kerberos ticket
+  command: kinit -kt {{ kerberos_keytab }} {{ kerberos_principal }}
+
+- name: List tickets
+  command: klist
+  register: tickets
+
+- debug:
+    var: tickets
+
+- name: Install jaas config worker
+  template:
+    src: jaas.conf
+    dest: "{{ local_dir }}/{{ jaas_config_file }}"
+
+- name: Install jaas config driver
+  template:
+    src: jaas_driver.conf
+    dest: "{{ local_dir }}/{{ jaas_config_file_driver }}"
+
+- name: Set log file name
+  set_fact:
+    log_file_name: "{{ ansible_date_time.epoch }}"
+
+- debug:
+    var: spark_submit_command
+
+- name: Submit job
+  command: "{{ spark_submit_command }}"
+  args:
+    chdir: "{{ local_dir }}"
+  environment:
+      SPARK_MAJOR_VERSION: 2
+  register:
+    submit_result
+  ignore_errors: True
+
+- name: Store log
+  copy:
+    content: "{{ submit_result.stderr }}"
+    dest: "{{ local_dir }}/{{ log_file_name }}.log"
+
+- name: Remove old log
+  local_action:
+    module: file
+    path: logs
+    state: absent
+
+- name: Create log dir
+  local_action:
+    module: file
+    path: logs
+    state: directory
+
+- name: Download log file
+  fetch:
+    src: "{{ local_dir }}/{{ log_file_name }}.log"
+    dest: logs/
+    flat: true
+
+- name: Remove remote log file
+  file:
+    path: "{{ local_dir }}/{{ log_file_name }}.log"
+    state: absent
+
+- fail:
+    msg: "Spark execution failed!"
+  when: submit_result.rc != 0

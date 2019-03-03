@@ -1,0 +1,17 @@
+[spark_master]
+datalake
+
+[spark_master:vars]
+in=in_topic
+out=out_topic
+checkpointDir=/data/group/dataScientist/{{ user | lower }}/spark/checkpoints/checkpoint_name
+bootStrapServers=server1:port,server2:port
+kafkaSecurityProtocol=SASL_PLAINTEXT
+kerberos_keytab={{ user | lower }}.keytab
+kerberos_keytab_link={{ user | lower }}.keytab
+kerberos_principal={{ user | lower }}@GLOBAL.SCD.SCANIA.COM
+spark_executors=96
+executor_memory=5529M
+driver_memory=5529M
+local_dir=/localhome/{{ user|lower }}
+access_group=access_group

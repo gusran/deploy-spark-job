@@ -1,0 +1,5 @@
+---
+- name: Deploy spark jobs
+  hosts: spark_master
+  roles:
+    - { role: deploy_spark_job, class: stopcalculation.PositionsToStops, jar: positions-to-stops-assembly-1.0.jar}
